@@ -49,7 +49,6 @@ Thanks goes to these wonderful people :
 - Impresion del lote de fichas importadas desde Mysql Workbench -->excel--> Access.
 
 
-
 # Acceso root con usuario y contraseña en instancia AWS.
 
  * Instalamos nano
@@ -65,10 +64,19 @@ Thanks goes to these wonderful people :
  * Modificar las lineas siguientes, deben quedar asi.
  ```
  disable_root: false
-ssh_pwauth:   true
+ ssh_pwauth:   true
+ ```
+## Cambio del puerto 22 a 6813 
+* Editar el archivo */etc/ssh/sshd_config* y colocar/modificar las lineas a:
 ```
-
-
+nano /etc/ssh/sshd_config
+```
+*Modificamos el archivo a:*
+```
+Port 6813 
+PasswordAuthentication yes
+PermitRootLogin yes
+```
  
  * PEAR package DB in order to access the database. To install it, execute at the command line:
    ```
