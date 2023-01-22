@@ -34,12 +34,42 @@ Thanks goes to these wonderful people :
 	</tr></table>
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
-# Requirements
+# Instalacion de daloradius en Almalinux/Rocky optare por Almalinux en AWS
+- Se necesita un vps con Almalinux instalado
+- Access para impresion de fichas
+- Mysql Workbench para checar tiempos y exportar las fichas/vouchers a excel
+	-  Se realizara una instalacion limpia en almalinux, si la instancia se conecta por ssh solamente, se le otorgara acceso por usuario/contraseña root para poder administrar desde Mysql Workbench la base de datos y exportarla a excel. (Access y Mysql workbench se usa para checar los usuarios en tiempos e imprimir las fichas/vouchers)
+-En este tutoria se utilizara en vez del puerto 22 el puerto 6813 para acceso por ssh, por lo que debera abrirse en la administracion del vps, aunque alternativamente puedes usar el 22 solamente ignora la parte del cambio de puerto.
+- Creacion de perfiles y planes tiempos ; Perfiles/grupos= manejo de tiempos de usuario, plan=costos del perfil o ficha individual,conteo.
+	- 2 Horas Pausadas
+	- 12 Horas Corridas
+	- Cliente-mensual recurrente
+	- Cliente ppoe
+- Acceso por Mysql Workbench a la base de datos y exportacion de un lote de fichas a excel.
+- Impresion del lote de fichas importadas desde Mysql Workbench -->excel--> Access.
 
- * Apache.
- * PHP v5.5 or higher.
- * MySQL v4.1 or higher.
- * [PEAR](https://pear.php.net/) PHP extension.
+
+
+# Acceso root con usuario y contraseña en instancia AWS.
+
+ * Instalamos nano
+ ```
+ sudo yum install nano
+ ```
+ * En el archivo **/etc/cloud/cloud.cfg** agregar el usuario *root*
+ ```
+ users:
+   - default
+   - root
+   ```
+ * Modificar las lineas siguientes, deben quedar asi.
+ ```
+ disable_root: false
+ssh_pwauth:   true
+```
+
+
+ 
  * PEAR package DB in order to access the database. To install it, execute at the command line:
    ```
    pear install DB
