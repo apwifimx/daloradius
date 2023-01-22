@@ -428,6 +428,22 @@ default schrema=radius
         -    Expiration <Check> = FECHA DE EXPIRACION = 10 Feb 2023
         -    Framed-Pool <Reply> = TIPO = pool_pppoe
 
+* Prueba hacer un lote con uno de los perfiles.
+* Prueba Agregar un NAS mikrotik, solo se realiza una vez
+   - managment>NAS>new nas
+   ```
+  NAS IP/Host 0.0.0.0/0
+  NAS Secret 84Uniq@
+  NAS Type other
+  NAS Shortname mikrotik
+  ```
+  - Managment >Hotspot  para agregar cada mikrotik
+  - new hotspot
+  ```
+  Hotspot Name hAP
+  MAC Address (es la mac ether1 en este caso de la wan donde recibe internet el mikrotik)
+  ```
+  * Prueba usar una ficha/voucher en el wifi mikrotik.
 # IMPRESION DE VOUCHERS CON ACCESS EN WINDOWS
 - USAR ACCESS CON EL ARCHIVO LOTES.ZIP.
 
