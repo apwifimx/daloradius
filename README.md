@@ -82,6 +82,12 @@ PasswordAuthentication yes
 PermitRootLogin yes
 ```
 ## Reglas de firewall para el puerto 6813
+* Instalacion paquete necesario firewalld
+```
+dnf install firewalld -y
+systemctl enable --now firewalld
+```
+* Puerto a abrir 6813
 ```
 semanage port -a -t ssh_port_t -p tcp 6813
 firewall-cmd --zone=public --add-port=6813/tcp --permanent
@@ -99,268 +105,112 @@ firewall-cmd --reload
 systemctl restart sshd
 ```
 
+* Colocarle contraseña al usuario root
+```
+sudo su
+passwd root
+sudo service sshd restart
+```
+* Ingresar desde el PC con
+```
+ssh -p6813 root@IP
+```
+* Borrar la parte de la ssh que no se usara ,todo antes de ssh-rsa de la clave ssh, ya que eso impide el acceso por ssh con la clave de acceso.
+```
+cd .ssh
+nano autorized_keys
+```
+* Guardar y reiniciar con
+```
+sudo service sshd restart
+```
+# Opcional eliminacion de kernel antiguo para liberar espacio en filesystem.
+```
+package-cleanup --oldkernels --count=1
+```
+# Actualizacion, selinux permisivo y paquetes a instalar
+```
+dnf update
+setenforce 0
+sed -i 's/^SELINUX=.*/SELINUX=permissive/g' /etc/selinux/config
+dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+dnf install -y https://rpms.remirepo.net/enterprise/remi-release-8.rpm
+```
+* Instalacion de modulos php,httpd,cli,curl....
+```
+dnf module enable php:remi-7.4
+dnf -y install @httpd @php
+dnf -y install php-{cli,curl,mysqlnd,devel,gd,pear,mbstring,xml,pear}
+dnf install firewalld -y
+```
+* Instalacion de PEAR, DB y MDB2
+```
+sudo pear install DB
+sudo pear install MDB2
+pear channel-update pear.php.net
+```
+* Activacion de servicios httpd php firewalld
+```
+systemctl enable --now httpd php-fpm
+systemctl enable --now firewalld
+```
+* Agregar servicios http https radius ntp
+```
+firewall-cmd --add-service={http,https,radius,ntp} --permanent
+firewall-cmd --reload
+```
+* Instalacion y activacion de servicio Mariadb
+```
+dnf module install mariadb
+systemctl enable --now mariadb
+```
+* Agregar contraseña a Mysql, cuando pregunte si se dea permitir remotamente colocar *y* de yes, la contraseña usada en este tutorial es *84Uniq@*.
+```
+mysql_secure_installation
+# acceso remoto --- > y
+# password usada aqui es 84Uniq@
+```
+* creacion de db
+```
+mysql -u root -p
+CREATE DATABASE radius;
+GRANT ALL ON radius.* TO radius@localhost IDENTIFIED BY "84Uniq@";
+FLUSH PRIVILEGES;
+quit;
+```
+# Instalacion y configuracion de freeradius
+* Instalamos los siguientes paquetes y activamos, tambien creamos un acceso simbolico
+```
+dnf install -y @freeradius freeradius-utils freeradius-mysql
+```
+```
+systemctl enable --now radiusd
+mysql -u root -p radius < /etc/raddb/mods-config/sql/main/mysql/schema.sql
+ln -s /etc/raddb/mods-available/sql /etc/raddb/mods-enabled/
+```
+* Creamos un backup del sql ya que lo remplazaremos por el que ya tengo, igualmente puedes usarlo y modificar los datos como el mio.
+```
+cp /etc/raddb/mods-available/sql /etc/raddb/mods-available/sql.bk
+```
+* Para remplazar los archivos por los del tutorial, debemos descargar una carpeta que los contiene 
+```
+git clone git@github.com:apwifimx/daloup.git
+```
+* Remplazamos el archivo *sql* 
+```
+\mv /root/daloup/sql /etc/raddb/mods-available/sql
+```
+* Aplicamos permisos y reiniciamos servicio
+```
+chgrp -h radiusd /etc/raddb/mods-enabled/sql
+systemctl restart radiusd
+```
+# Instalacion y configuracion de Daloradius
 
 
 
 
 
-
- * PEAR package DB in order to access the database. To install it, execute at the command line:
-   ```
-   pear install DB
-   ```
- * PEAR packages Mail and Mail_Mime to send notifications by email. To install them, execute at the command line:
-   ```
-   pear install -a Mail
-   pear install -a Mail_Mime
-   ```
-
-More details about installation and requirements can be found if needed on the (maybe very old) files:
-
- * INSTALL
- * INSTALL.openSUSE
- * INSTALL.quick
- * INSTALL.win
- * FAQS
-
-# Documentation
-
-You can find some documentation in the `doc` directory.
-
-
-
-# daloRADIUS Book
-
-Liran Tal authored a book about working with daloRADIUS covering most aspects through the UI, including setting up a captive portal system.
-## Amazon Paperback Book
-The paperback book version is available through Amazon at http://www.amazon.com/daloRADIUS-User-Guide-Volume-1/dp/1463752199
-
-![daloradius_book][daloRADIUS_Book]
-## PDF Digital Book
-There is also a digital version of the book via PDF, available at: https://lirantal.selz.com/
-
-
-
-# Features
-
-## Management
-### User Management
-
-    * List Users
-    * Create New User
-    * Create New User - Quick add
-      easy to use for POS or HotSpot shops
-    * Edit User
-    * Search User
-    * Delete User
-
-![daloradius_logo][daloRADIUS_Feature_Management]
-
-## HotSpot Management
-
-    * List HotSpots
-    * Create New HotSpot
-    * Edit HotSpot
-    * Delete HotSpot
-
-
-
-## NAS Management
-
-    * List NAS
-    * Create New NAS
-    * Edit NAS
-    * Delete NAS
-
-
-
-## Groups Management
-
-    * List, Create New, Edit and Delete User-Groups Mapping
-      usergroup table in radius database
-    * List, Create New, Edit and Delete Group-Reply and Group-Check Settings
-      radgroupreply and radgroupcheck tables in radius database for managing group-wide attributes
-
-
-
-
-## Accounting
-### Users Accounting By
-
-    * Username
-    * IP Address
-    * NAS IP Address
-    * Date (From/To)
-    * Display of All Accounting records
-      the entire content of the radacct table in the radius database
-    * Display of Active Accounting records
-      performed by an algorithm implemented by daloRADIUS itself to calculate if
-      an account has expired or not based on it's Max-All-Session attribute or Expiration attribute
-	* Custom Accounting Query
-
-
-### HotSpots Accounting
-
-    * Comparison of Accounting for different HotSpots
-      provides information on hotspot's unique users, total hits, average time and total time
-
-![daloradius_logo][daloRADIUS_Feature_Accounting]
-
-
-
-### GIS - Geographical Information System
-
-	daloRADIUS comes with integrated support for GIS provided by
-	Leaflet and CARTO basemap thus
-	provides the ability to visually locate deployed HotSpots across a map, see their status,
-	and monitor them visually.
-
-	* View Map
-	  Provides functionality of monitoring deployed HotSpots
-
-	* Edit Map
-	  Provides functionality for adding or deleting HotSpots from within the map itself
-	  (i.e: no need to go to HotSpots Management page and delete or create a new one there)
-
-
-
-## Reporting
-
-
-### Basic Reporting
-
-    * Online Users
-      View Online users, users that are connected to the system from all NASes at a current
-      point in time.
-    * Last Connection Attempts
-      View last connection attempts and their status - whether they were rejected or successful
-    * Search Users
-      Search for Users - similar to the functionality in User Management page
-    * Top Users
-      View a report of the Top Users based on their Bandwidth consumption or Time usage
-
-
-
-### Logs Reporting
-
-    * daloRADIUS Log
-      daloRADIUS keeps a log file for all the actions it performs itself (viewing pages,
-      form actions like deleting users, creating new hotspots, queries submission as in
-      performing user accounting and more)
-    * RADIUS Server Log
-      Provides monitoring of the freeradius server logfile
-    * System Log
-      Provides monitoring of the system log, being syslog or messages, depends.
-    * Boot Log
-      Provides monitoring of the boot/kernel log (dmesg)
-
-
-
-### Status Reporting
-
-    * Server Status
-      Provides detailed information on the server daloRADIUS is deployed.
-      Information such as CPU utilization, uptime, memory, disks information, and more.
-    * RADIUS Status
-      Provides information whether the freeradius server is running along with the database
-      server (mysql, postgresql, or others)
-
-
-
-## Billing
-
-    * POS (Point of Sales)
-	* Plans
-	* Rates
-	* PayPal Transactions
-	* Billing History
-	* Invoices
-	* Payments
-
-
-
-## Graphs
-
-### Users Graphs
-Provides visual graphs and statistical listing per user connection's attributes, being:
-
-    * Logins/Hits
-    * Download
-    * Upload
-
-
-### Server-Wide Graphs
-Provides visual graphs and statistical listing for the entire server, all-time information on:
-
-    * Logins/Hits
-    * Traffic Comparison
-
-
-
-
-## Configuration
-
-### Global Configuration
-
-    * Database Settings
-      Database connection information (storage: mysql, postgresql and others),
-      credentials (username and password), radius database tables names (radcheck, radacct, etc),
-      and database password encryption type (none, md5, sha1)
-    * Language Settings
-      daloRADIUS is multi-lingual and supports currently English and Russian language packs
-    * Logging Settings and Debugging
-      Logging of different actions, queries and page visiting performed on different pages.
-      Also supports debugging of SQL queries executed.
-    * Interface Settings
-      Support for displaying password text in either clear-text or as asterisks to hide it.
-      Table listing spanning across multiple pages is configurable on number of rows per page
-      and addition of numbers links for quick-access to different pages.
-
-
-### Maintenance
-
-    * Test User Connectivity
-      Provides the ability to check if a user's credentials (username and password) are valid by
-      executing a radius query to a radius server (configurable for radius port, shared secret, etc)
-	* Disconnect User
-	  Supply a username and send a PoD (Packet of Disconnect) or CoA (Change of Authority) packet
-	  to the NAS to disconnect the user.
-
-### Operators
-
-daloRADIUS supports Operators for complete management of the entire platform.
-Different Operators can be added with their contact information and ACLs settings to
-grant or revoke them of permissions to access different pages.
-
-    * List Operators
-    * Create New Operator
-    * Edit Operator
-    * Delete Operator
-
-
-
-# Credits
-
- [daloRADIUS](http://www.daloradius.com) makes use of several third-party packages and I would like to thank these
- great tools and their authors for releasing such a good software to the community.
-
- * datepicker PHP class	- Stefan Gabos <ix@nivelzero.ro>
- * libchart PHP class	- Jean-Marc Trémeaux <jm.tremeaux@gmail.com>
- * icons collection - Mark James of famfamfam.com icons <mjames@gmail.com>
- * ajax auto complete - Batur Orkun <batur@bilkent.edu.tr>
- * dhtml-Suite - Magne Kalleland <post@dhtmlgoodies.com>
- * dompdf - [https://github.com/dompdf](https://github.com/dompdf)
-
-
-
-# Support
-
-Helpful resources to find help and support with daloRADIUS:
-
- * *Official daloRADIUS Website*: http://www.daloradius.com
- * SourceForge hosted forums area: https://sourceforge.net/p/daloradius/discussion/
- * *Mailing List*: daloradius-users@lists.sourceforge.net and register here to post there: https://lists.sourceforge.net/lists/listinfo/daloradius-users
- * Facebook's daloRADIUS related group: https://www.facebook.com/groups/551404948256611/
 
 
 
