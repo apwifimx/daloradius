@@ -57,10 +57,14 @@ Thanks goes to these wonderful people :
  ```
  * En el archivo **/etc/cloud/cloud.cfg** agregar el usuario *root*
  ```
+ nano /etc/cloud/cloud.cfg
+ ```
+ *Agregamos el usuario root*
+ ```
  users:
    - default
    - root
-   ```
+ ```
  * Modificar las lineas siguientes, deben quedar asi.
  ```
  disable_root: false
@@ -77,7 +81,30 @@ Port 6813
 PasswordAuthentication yes
 PermitRootLogin yes
 ```
- 
+## Reglas de firewall para el puerto 6813
+```
+semanage port -a -t ssh_port_t -p tcp 6813
+firewall-cmd --zone=public --add-port=6813/tcp --permanent
+```
+* Checar que la linea del archivo */etc/firewalld/firewalld.conf* queden en no.
+`nano /etc/firewalld/firewalld.conf`
+*Dentro buscar la linea AllowZoneDrifting=yes y cambiarla a no*
+```
+AllowZoneDrifting=no
+```
+* Reiniciar servicio firewalld y sshd
+```
+systemctl restart firewalld
+firewall-cmd --reload
+systemctl restart sshd
+```
+
+
+
+
+
+
+
  * PEAR package DB in order to access the database. To install it, execute at the command line:
    ```
    pear install DB
