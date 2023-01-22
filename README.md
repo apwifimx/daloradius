@@ -207,12 +207,247 @@ systemctl restart radiusd
 ```
 # Instalacion y configuracion de Daloradius
 
+```
+git clone
+```
+* Descomprimimos con
+```
+tar -xf daloradius.tar.gz
+```
+* Entramos a la carpeta
+```
+cd daloradius
+```
+* Lanzamos los siguientes comandos recordando la contraseña que le pusimos.
+```
+mysql -u root -p radius < contrib/db/fr2-mysql-daloradius-and-freeradius.sql
+```
+* Despues este otro
+```
+mysql -u root -p radius < contrib/db/mysql-daloradius.sql
+```
+* Salimos a una carpeta anterior con
+```
+cd ..
+```
+* Movemos el directorio a /var/www/html
+```
+mv daloradius /var/www/html/
+```
+* Copiamos uno de los archivos que descargamos, recuerda cambiarle los datos por los tuyos, password
+```
+\mv /root/daloup/daloradius.conf.php /var/www/html/daloradius/library/daloradius.conf.php
+```
+* Aplicamos permisos y reiniciamos servicio
+```
+chown -R apache:apache /var/www/html/daloradius/
+chmod 664 /var/www/html/daloradius/library/daloradius.conf.php
+systemctl restart radiusd.service httpd
+```
+* Cambiar el timezone al que usaremos, tambien instalamos chrony
+```
+dnf install chrony -y
+systemctl enable --now chronyd
+firewall-cmd --permanent --add-service=ntp
+firewall-cmd --reload
+timedatectl set-timezone America/Mexico_City
+```
+* Instalamos php-dba y policycoreutils
+```
+dnf install -y policycoreutils-python-utils
+semanage fcontext -a -t httpd_sys_rw_content_t "/var/www/html/daloradius(/.*)?"
+restorecon -Rv /var/www/html/daloradius
+dnf -y install php-dba
+```
+* Aplicamos permisos a unos directorios necesarios de logs y creamos uno nuevo tambien
+```
+chmod 755 /var/log/radius/
+chmod 644 /var/log/radius/radius.log
+chmod 644 /var/log/messages
+#chmod 644 /var/log/dmesg
+touch /tmp/daloradius.log
+```
+* Modificamos el archivo radiusd.conf , yo le hare backup y colocare el mio
+```
+cp /etc/raddb/radiusd.conf /etc/raddb/radiusd.conf.bk
+\mv /root/daloup/radiusd.conf /etc/raddb/radiusd.conf
+```
+* Modificamos el archivo /etc/raddb/sites-enabled/default  yo le colocare el que descargue
+```
+cp /etc/raddb/sites-enabled/default /etc/raddb/sites-enabled/default.bk
+\mv /root/daloup/default /etc/raddb/sites-enabled/default
+```
+
+* Modificamos el archivo  /etc/raddb/mods-available/sqlcounter ,yo le pondre el que descargue.
+cp /etc/raddb/mods-available/sqlcounter /etc/raddb/mods-available/sqlcounter.bk
+\mv /root/daloup/sqlcounter /etc/raddb/mods-available/sqlcounter
+```
+* Modificar el archivo /etc/raddb/mods-config/sql/counter/mysql/access_period.conf o colocarle el que he subido
+```
+cp /etc/raddb/mods-config/sql/counter/mysql/access_period.conf /etc/raddb/mods-config/sql/counter/mysql/access_period.conf.bk
+\mv /root/daloup/access_period.conf /etc/raddb/mods-config/sql/counter/mysql/access_period.conf
+```
+* Modificar el archivo /etc/raddb/mods-config/sql/counter/mysql/quotalimit.conf o colocarle el descargado
+```
+cp /etc/raddb/mods-config/sql/counter/mysql/quotalimit.conf /etc/raddb/mods-config/sql/counter/mysql/quotalimit.conf.bk
+\mv /root/daloup/quotalimit.conf /etc/raddb/mods-config/sql/counter/mysql/quotalimit.conf
+```
+* Modificar el archivo /etc/raddb/mods-enabled/radutmp o pasarle el descargado...
+```
+cp /etc/raddb/mods-enabled/radutmp /etc/raddb/mods-enabled/radutmp.bk
+\mv /root/daloup/radutmp /etc/raddb/mods-enabled/radutmp
+```
+* Modificar el archivo  /etc/raddb/mods-config/sql/main/mysql/queries.conf o colocarle el descargado
+```
+cp /etc/raddb/mods-config/sql/main/mysql/queries.conf /etc/raddb/mods-config/sql/main/mysql/queries.conf.bk
+\mv /root/daloup/queries.conf /etc/raddb/mods-config/sql/main/mysql/queries.conf
+```
+* Modificar el archivo php.conf o enviar el propio
+```
+cp /etc/httpd/conf.d/php.conf /etc/httpd/conf.d/php.conf.bk
+\mv /root/daloup/php.conf /etc/httpd/conf.d/php.conf
+```
+* En radius.service comentar *ExecStartPre=-/bin/sh /etc/raddb/certs/bootstrap* colocarle un #
+```
+nano /usr/lib/systemd/system/radiusd.service
+```
+* Importante subir esquema de la base de datos ---->>>
+```
+cd daloup
+```
+* Enviar sql descargado importante
+```
+mysql -u root -p radius < base.sql
+```
+* Iniciar servicio
+```
+systemctl status radiusd
+systemctl start radiusd
+```
+* Para analisis puede usar
+```
+systemctl status radiusd
+systemctl stop radiusd
+radiusd -X
+systemctl start radiusd
+```
 
 
 
 
 
 
+# Respaldar directorio /var/www/html/daloradius
+```
+cd /var/www/html
+tar -zcvf daloradius.tar.gz daloradius
+```
+* Descomprimir con
+```
+cd /var/www/html
+tar -xf daloradius.tar.gz
+```
+* Acceso por medio de la interfaz web a daloradius
+```
+http://IP/daloradius/index.php
+USUARIO= administrator
+PASSWORD= radius
+```
+# Agregar memoria swap de 8Gb
+```
+sudo fallocate -l 8G /swapfile
+ls -lh /swapfile
+sudo chmod 600 /swapfile
+ls -lh /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+sudo swapon --show
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+echo 'vm.swappiness=10' | sudo tee -a /etc/sysctl.conf
+sudo sysctl vm.swappiness=10
+sudo sysctl vm.vfs_cache_pressure=50
+echo 'vm.vfs_cache_pressure=50' | sudo tee -a /etc/sysctl.conf
+top
+```
+# Acceder por ssh con usuario y contraseña con el puerto 6813
+```
+ssh -p6813 root@IP 
+```
+# Conexion por MYSQL workbench con los datos de este tutorial
+- instalar mysql workbench
+```
+standar tcp/ip over ssh
+IP:6813
+ssh username= root 
+ssh password= 84Uniq@
+mysql hostname= 127.0.0.1
+mysql server port=3306
+username=root   
+default schrema=radius 
+```
+
+# Creacion de perfiles/grupos y planes
+### 2 HORAS TIEMPO PAUSADO==========> NOMBRE DEL PERFIL/GRUPO= 2HPAUSADO
+        
+        LOS ATRIBUTOS SON DEFINIDOS EN EL PERFIL 
+        -    Max-All-Session  <check> = TIEMPO DEL VOUCHER EN SEGUNDOS 2HRS=7200
+        -    WISPr-Bandwidth-Max-Up <Reply> = VELOCIDAD DE SUBIDA
+        -    WISPr-Bandwidth-Max-Down <Reply> = VELOCIDAD DE BAJADA
+        -    PARA CONTABILIDAD LLEVA UN PLAN ,AL CREAR LOS VOUCHERS SE SELECCIONA EL PLAN
+
+### 12 HORAS TIEMPO CORRIDO==========>NOMBRE DEL PERFIL/GRUPO= 12HCORRIDO
+
+        LOS ATRIBUTOS SON DEFINIDOS EN EL PERFIL
+        - Access-Period <Check> = TIEMPO DEL VOUCHER EN SEGUNDOS 12HRS=43200
+        -    WISPr-Bandwidth-Max-Up <Reply> = VELOCIDAD DE SUBIDA
+        -    WISPr-Bandwidth-Max-Down <Reply> = VELOCIDAD DE BAJADA
+        -    PARA CONTABILIDAD LLEVA UN PLAN ,AL CREAR LOS VOUCHERS SE SELECCIONA EL PLAN
+
+### VOUCHER MENSUAL / PERSONALIZADO   =========> NOMBRE DEL PERFIL/GRUPO = MENSUAL
+
+        SON CLIENTES MENSUALES QUE PUEDEN SER RECURRENTES, O SE LES PUEDE AGREGAR POR DIAS
+        - ATRIBUTOS EN EL PERFIL SON.
+                -    WISPr-Bandwidth-Max-Up <Reply> = VELOCIDAD DE SUBIDA
+                -    WISPr-Bandwidth-Max-Down <Reply> = VELOCIDAD DE BAJADA
+        - LOS ATRIBUTOS A CADA VOUCHER PERSONALIZADO POR EJEMPLO HOY ES 21/01/2023 Y QUIERO DARLE 15 DIAS.
+        > NUEVO USUARIO 
+        > NOMBRE = PRUEBA15 
+        > CONTRASEÑA=123 
+        > GRUPO= MENSUAL
+        >> ATRIBBUTES > CUSTOM ATRIBUTE
+        - WISPr-Session-Terminate-Time <Reply> = 2023-02-06T11:00:00
+        - EL USUARIO SE LE TERMINARA EL ACCESO EL DIA 06/02/2023 A LAS 11:00 AM.
+        - SI DESEO MODIFICAR LA FECHA SOLO BUSCO EL USUARIO Y MODIFICO EL ATRIBUTO.
+        - PARA CONTABILIDAD NO LLEVA UN PLAN, NO SE LLEVA CONTROL YA QUE SON MANUALES Y RECURRENTES.
+
+### CLIENTE PPOE
+
+        LOS ATRIBUTOS SON.
+        -    Mikrotik-Rate-Limit <rEPLY> = VELOCIDAD DE CONEXION
+        -    Framed-Protocol = PPP
+        AL CREAR EL USUARIO SE COLOCA
+        -    Expiration <Check> = FECHA DE EXPIRACION = 10 Feb 2023
+        -    Framed-Pool <Reply> = TIPO = pool_pppoe
+
+# IMPRESION DE VOUCHERS CON ACCESS EN WINDOWS
+- USAR ACCESS CON EL ARCHIVO LOTES.ZIP.
+
+## BUSCAR EL ID CORRESPONDIENTE AL LOTE X EN WORKBENCH
+- EN WORKBENCH ---> CONECTAR DB ---> RESUMEN --->CALENDAR CON RAYO
+- COLOCAR
+```
+SELECT * FROM radius.resumen;
+```
+- CHECAR EL ID POR EJEMPLO 26
+## EXPORTAR LISTA DE FICHAS / VOUCHERS DE ESE LOTE
+- EN WORKBENCH ---> CONECTAR DB ---> FICHAS --->CALENDAR CON RAYO
+```
+SELECT * FROM radius.fichas
+where id in (26)
+```
+- DARLE CLICK EN RAYO 
+- EXPORTARLAS A EXCEL
+- COPIARLAS Y COLOCARLAS EN EL ACCESS PARA IMPRIMIR.
 
 
 # Copyright
