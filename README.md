@@ -1,7 +1,5 @@
 # About
 
-![daloradius_logo][daloRADIUS_Logo]
-
 [daloRADIUS](http://www.daloradius.com) is an advanced RADIUS web management application aimed at managing hotspots and
 general-purpose ISP deployments. It features user management, graphical reporting, accounting,
 a billing engine and integrates with GoogleMaps for geo-locating.
