@@ -331,11 +331,6 @@ radiusd -X
 systemctl start radiusd
 ```
 
-
-
-
-
-
 # Respaldar directorio /var/www/html/daloradius
 ```
 cd /var/www/html
@@ -464,7 +459,10 @@ where id in (26)
 - EXPORTARLAS A EXCEL
 - COPIARLAS Y COLOCARLAS EN EL ACCESS PARA IMPRIMIR.
 
-
+# BACKUP BASE DE DATOS
+```
+mysqldump -u root -p radius > base.sql
+```
 # Copyright
 
 Copyright Liran Tal 2007-2019. All rights reserved.
