@@ -206,7 +206,7 @@ systemctl restart radiusd
 # Instalacion y configuracion de Daloradius
 
 ```
-git clone
+git clone git@github.com:apwifimx/daloradius.git
 ```
 * Descomprimimos con
 ```
