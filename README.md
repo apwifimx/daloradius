@@ -45,7 +45,7 @@ Thanks goes to these wonderful people :
 	- Cliente ppoe
 - Acceso por Mysql Workbench a la base de datos y exportacion de un lote de fichas a excel.
 - Impresion del lote de fichas importadas desde Mysql Workbench -->excel--> Access.
-
+- Contraseña usada en este tutorial para root,mysql y archivo daloradius.conf.php es *84Uniq@*.
 
 # Acceso root con usuario y contraseña en instancia AWS.
 
@@ -168,7 +168,7 @@ mysql_secure_installation
 # acceso remoto --- > y
 # password usada aqui es 84Uniq@
 ```
-* creacion de db
+* creacion de db aqui la contraseña que use es *84Uniq@* procura cambiarla
 ```
 mysql -u root -p
 CREATE DATABASE radius;
@@ -232,7 +232,7 @@ cd ..
 ```
 mv daloradius /var/www/html/
 ```
-* Copiamos uno de los archivos que descargamos, recuerda cambiarle los datos por los tuyos, password
+* Copiamos uno de los archivos que descargamos, recuerda cambiarle el password por el tuyo el usado en este archivo es *84Uniq@*.
 ```
 \mv /root/daloup/daloradius.conf.php /var/www/html/daloradius/library/daloradius.conf.php
 ```
