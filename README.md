@@ -265,7 +265,7 @@ chmod 644 /var/log/messages
 #chmod 644 /var/log/dmesg
 touch /tmp/daloradius.log
 ```
-* Modificamos el archivo radiusd.conf , yo le hare backup y colocare el mio
+* el archivo radiusd.conf , yo le hare backup y colocare el mio
 ```
 cp /etc/raddb/radiusd.conf /etc/raddb/radiusd.conf.bk
 \mv /root/daloup/radiusd.conf /etc/raddb/radiusd.conf
@@ -277,6 +277,7 @@ cp /etc/raddb/sites-enabled/default /etc/raddb/sites-enabled/default.bk
 ```
 
 * Modificamos el archivo  /etc/raddb/mods-available/sqlcounter ,yo le pondre el que descargue.
+```
 cp /etc/raddb/mods-available/sqlcounter /etc/raddb/mods-available/sqlcounter.bk
 \mv /root/daloup/sqlcounter /etc/raddb/mods-available/sqlcounter
 ```
