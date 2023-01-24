@@ -459,10 +459,56 @@ where id in (26)
 - EXPORTARLAS A EXCEL
 - COPIARLAS Y COLOCARLAS EN EL ACCESS PARA IMPRIMIR.
 
-# BACKUP BASE DE DATOS
+# BACKUP BASE DE DATOS MANUALMENTE
 ```
 mysqldump -u root -p radius > base.sql
 ```
+### RESTAURAR BASE DE DATOS
+```
+mysql -u root -p radius < base.sql
+```
+# BACKUP BASE DE DATOS AUTOMATICO Y CRONTAB
+suponiendo que la carpeta es /root/backupdb/db.sh
+```
+mkdir backupdb
+cd backupdb
+nano db.sh
+```
+- Dentro de el archivo db.sh introducir lo siguiente, cambiando tu usuario y contraseña.
+```
+username=root
+password=84Uniq@
+database=radius
+now="$(date +'%d_%m_%Y_%H_%M_%S')"
+filename="base_$now".gz
+backupfolder="/root/backupdb/"
+fullpathbackupfile="$backupfolder/$filename"
+logfile="$backupfolder/"base_log_"$(date +'%Y_%m')".txt
+echo "mysqldump started at $(date +'%d-%m-%Y %H:%M:%S')" >> "$logfile"
+mysqldump --user=$username --password=$password $database > $fullpathbackupfile
+echo "mysqldump finished at $(date +'%d-%m-%Y %H:%M:%S')" >> "$logfile"
+
+echo "remove backup 5 days old" >> "$logfile"
+# Delete files older than 5 days
+find $backupfolder=/* -mtime +5 -exec rm {} \;
+echo "complete removing" >> "$logfile"
+exit 0
+#sudo chmod +x db.sh
+#sudo ./db.sh
+```
+- Instalacion de cronie para el crontab , se ejecute automaticamente cada dia a las 9 am.
+```
+yum install cronie
+```
+- Ahora con el siguiente abremos crontab
+```
+export VISUAL=nano; crontab -e
+```
+- Colocamos dentro la siguiente linea, recuerda el directorio es donde esta el script db.sh
+```
+* 9 * * * /root/backupdb/db.sh
+```
+
 # Copyright
 
 Copyright Liran Tal 2007-2019. All rights reserved.
